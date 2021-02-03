@@ -7,6 +7,10 @@ import tensorflow as tf
 import cv2
 import numpy as np
 
+
+
+
+
 class BaseModel(object):
     
     def __init__(self,
@@ -22,13 +26,13 @@ class BaseModel(object):
                  lr_decay=0.95,
                  lr_decay_freq=4,
                  batch_size=8,
-                 gpu_memory_fraction=0.2,   # 1.0
+                 gpu_memory_fraction=0.1,
                  train_vars='segm',
                  training=True,
                  w_summary=True):
         
         # Configure GPU
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_memory_fraction)
+        gpu_options = tf.GPUOptions(allow_growth = True )
         config = tf.ConfigProto(log_device_placement=False, allow_soft_placement=True, gpu_options=gpu_options)
         tf.reset_default_graph()
         self.sess = tf.Session(config=config)
@@ -101,6 +105,8 @@ class BaseModel(object):
             # self.segm_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(
             #    labels=self.gtmap, logits=self.predmap, name='Segm_Loss'))
             # self.segm_loss = tf.nn.l2_loss(self.gtmap - tf.nn.sigmoid(self.predmap))
+
+
             self.locate_loss = tf.reduce_mean(tf.abs(self.predmap - self.gt, name='Locate_loss'))
             # self.class_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(
             #    labels=self.gt, logits=self.pred, name='Class_Loss'))
@@ -157,7 +163,7 @@ class BaseModel(object):
 
         self.predmap = self.net(self.img)
         print(self.img)
-        print(self.predmap)
+        print('8\n', self.predmap)
 
         if self.training:
             # train op

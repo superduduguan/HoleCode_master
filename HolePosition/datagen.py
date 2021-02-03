@@ -50,11 +50,13 @@ class DataGenerator(object):
             Radius = labels['radius']
             img_path = labels['path']
             classific = labels['class']
-
-            image = self.load_image(self.image_dir + img_path, norm=False)
-            self.label_dict[samplename] = {'image': image, 'centP': CenterPoints,
-                                           'r': Radius, 'class': classific}
-            self.train_table.append(samplename)
+            try:
+                image = self.load_image(self.image_dir + img_path, norm=False)
+                self.label_dict[samplename] = {'image': image, 'centP': CenterPoints,
+                                               'r': Radius, 'class': classific}
+                self.train_table.append(samplename)
+            except:
+                pass
                
             
     def _randomize(self):
