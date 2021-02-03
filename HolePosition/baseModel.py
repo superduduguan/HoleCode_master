@@ -116,7 +116,7 @@ class BaseModel(object):
             self.l2_regular = self.weight_decay * tf.reduce_sum(
                     [tf.nn.l2_loss(var) for var in trainable_vars], name='L2_Regularization')
             # self.loss = self.locate_loss + self.class_loss + self.l2_regular
-            self.loss = self.locate_loss# + self.l2_regular
+            self.loss = self.locate_loss + self.l2_regular
             # elif self.train_vars == 'class':
             #     trainable_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'AnomalyDetection/Classification')
             #     self.l2_regular = self.weight_decay * tf.reduce_sum(

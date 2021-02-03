@@ -8,7 +8,7 @@ import cv2
 import random
 import json
 from albumentations import HorizontalFlip, CenterCrop, ShiftScaleRotate, GaussNoise, \
-    MedianBlur, RandomBrightnessContrast, Compose, VerticalFlip
+    MedianBlur, RandomBrightnessContrast, Compose, VerticalFlip, Resize
 
 
 class DataGenerator(object):
@@ -141,7 +141,7 @@ class DataGenerator(object):
             GaussNoise(p=0.3),
             RandomBrightnessContrast(p=1, brightness_limit=0.2, contrast_limit=0.2),
             MedianBlur(blur_limit=3, p=0.2),
-            CenterCrop(p=1, height=80, width=80)
+            Resize(p=1, height=80, width=80)
         ], p=1)
 
     def load_image(self, name, norm=False):

@@ -7,7 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # or any {'0', '1', '2'}
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
-pb_path = r'C:\Users\pc\Desktop\HoleCode\HolePosition\HolePositionnew2.pb'
+pb_path = r'C:\Users\pc\Desktop\HoleCode_master\HolePosition\twice2.pb'
 input_dir = r'C:\Users\pc\Desktop\HoleCode\rev.2'
 
 def get_all_path(input_dir):
@@ -33,6 +33,8 @@ def load_image(name, norm=True):
 
 def main():
     all_paths = get_all_path(input_dir)
+
+
     sess = tf.Session()
     with gfile.FastGFile(pb_path, 'rb') as f:
 
@@ -46,40 +48,40 @@ def main():
         input_x = sess.graph.get_tensor_by_name('input/img_in:0')
         op = sess.graph.get_tensor_by_name('HoleDetection/LocationResult:0')
 
-        image_path = r'C:\Users\pc\Desktop\HoleCode\v2.4.1\neg\b_19_11_2_8.bmp'
+        # image_path = r'C:\Users\pc\Desktop\HoleCode\v2.4.1\neg\b_19_11_2_8.bmp'
         # img = load_image(image_path)
         # a = [52.5/80, 50/80, 14.25/40]
 
 
         img = load_image(image_path)
-        img = img[10:90, 10:90]
-        cv2.imshow('1', img)
-        cv2.waitKey(5000)
+        img = cv2.resize(img, (80, 80))
+        # cv2.imshow('1', img)
+        # cv2.waitKey(5000)
         _input = np.expand_dims(img, 0)
 
         a = sess.run(op,  feed_dict={input_x: _input})[0]
-        print(a)
+        # print(a)
 
         #
 
-        RATIO = 0.8 #0.75
+        RATIO = 0.9 #0.75
         lux = int((a[0] - RATIO * a[2]) * 80)
         luy = int((a[1] - RATIO * a[2]) * 80)
         rdx = int((a[0] + RATIO * a[2]) * 80)
         rdy = int((a[1] + RATIO * a[2]) * 80)
-        print(luy, rdy, lux, rdx)
+        # print(luy, rdy, lux, rdx)
         lux, luy = max(0, lux), max(0, luy)
         rdx, rdy = min(80, rdx), min(80, rdy)
         sub = '[' + str(lux) + '_' + str(luy) + '_' + str(rdx) + '_' + str(rdy) + ']'
         img = img[luy:rdy, lux:rdx, :]
-        cv2.imshow('1', img)
-        cv2.waitKey(5000)
-        print(luy, rdy, lux, rdx)
-        quit()
+        # cv2.imshow('1', img)
+        # cv2.waitKey(5000)
+        # print(luy, rdy, lux, rdx)
+        # quit()
 
 
         try:
-            filepath = "C:\\Users\\pc\\Desktop\\HoleCode\\test_result\\" + str(image_path.split('\\')[-1])
+            filepath = "C:\\Users\\pc\\Desktop\\HoleCode\\test_result2\\" + str(image_path.split('\\')[-1])
             cv2.imwrite(filepath, img * 255)
         except:
             print(image_path)

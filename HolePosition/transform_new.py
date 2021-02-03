@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-meta_path = 'model.ckpt-179.meta'
+meta_path = 'model.ckpt-82.meta'
 output_node_names = ['HoleDetection/LocationResult']   
 
 with tf.Session() as sess:
@@ -9,7 +9,7 @@ with tf.Session() as sess:
     saver = tf.train.import_meta_graph(meta_path)
 
     # Load weights
-    saver.restore(sess, tf.train.latest_checkpoint('C:\\Users\\pc\\Desktop\\HoleCode\\HolePosition\\'))
+    saver.restore(sess, tf.train.latest_checkpoint('C:\\Users\\pc\\Desktop\\HoleCode_master\\HolePosition\\'))
 
     # Freeze the graph
     frozen_graph_def = tf.graph_util.convert_variables_to_constants(
@@ -18,5 +18,5 @@ with tf.Session() as sess:
         output_node_names)
 
     # Save the frozen graph
-    with open('HolePositionnew2.pb', 'wb') as f:
+    with open('twice2.pb', 'wb') as f:
         f.write(frozen_graph_def.SerializeToString())
