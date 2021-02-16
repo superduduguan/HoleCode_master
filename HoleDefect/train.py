@@ -12,7 +12,7 @@ import numpy as np
 
 
 # Configurations and hyper-params
-IMAGE_DIR = '/home/vision-02/Hole_Detection/Hole_Data/Normalized_Data/train/'
+IMAGE_DIR = 'C:\\Users\\pc\\Desktop\\HoleCode\\Normalized_Data\\train\\' #train
 # LABEL_DIR = '/home/vision-02/Hole_Detection/Hole_Data/labels_clean/'
 LOGDIR = "logs/%d%02d%02d_%02d%02d/" %(
     now.year, now.month, now.day, now.hour, now.minute)
@@ -27,7 +27,7 @@ WEIGHT_DECAY = 4e-5
 BASE_LR = 1e-2
 BATCH_SIZE = 256
 EPOCH = 250
-EPOCH_SIZE = 4408//BATCH_SIZE
+EPOCH_SIZE = 10421//BATCH_SIZE
 LR_DECAY = 0.9
 LR_DECAY_FREQ = 2
 GPU_MEMORY_FRACTION = 0.3  #1.0

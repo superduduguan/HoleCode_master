@@ -7,7 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # or any {'0', '1', '2'}
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
-pb_path = r'C:\Users\pc\Desktop\HoleCode_master\HolePosition\twice2.pb'
+pb_path = r'C:\Users\pc\Desktop\HoleCode_master\HolePosition\3and2x2.pb'
 input_dir = r'C:\Users\pc\Desktop\HoleCode\rev.2'
 
 def get_all_path(input_dir):

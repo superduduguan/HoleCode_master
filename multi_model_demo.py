@@ -62,14 +62,12 @@ class ClaPbModel(PbModel):
         return sigmoid(out)  ########
 
 
-def load_img(path, crop=True):  ########
+def load_img(path):  ########
     """ Get img for Hole Position"""
     img = cv2.imread(path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    if crop:
-        img = img[10:-10, 10:-10] / 255.
-    else:
-        img = img / 255.
+
+    img = cv2.resize(img, (80, 80)) / 255.
     return img
     
 def Preprocess4Defect(img):  ########
@@ -90,12 +88,12 @@ def get_all_path(input_dir):
                 all_paths.append(os.path.join(rootdir, filename))
     return all_paths
 
-def main(img_path):
+def main(img_path, dt):
     # 获取当前文件所在目录
     cur_path = os.path.abspath(__file__)
     cur_dir = os.path.dirname(cur_path)
     # 载入定位网络
-    loc_model_path = os.path.join(cur_dir, 'HolePosition/output_graph.pb')
+    loc_model_path = os.path.join(cur_dir, 'model/position/3and2x2.pb')
     loc_model = LocPbModel(loc_model_path)
     # 创建分类网络
     NUM_CLA_MODEL = 5
@@ -116,15 +114,34 @@ def main(img_path):
     # print('loc_result: {}'.format(loc_result))
     
     # 获取塞孔图像并统一大小
-    SIZE_RATIO = 0.75  ########
+    SIZE_RATIO = 0.9  ########
     lux = int((loc_result[0][0] - SIZE_RATIO * loc_result[0][2]) * ORI_IMG_SIZE)
     luy = int((loc_result[0][1] - SIZE_RATIO * loc_result[0][2]) * ORI_IMG_SIZE)
     rdx = int((loc_result[0][0] + SIZE_RATIO * loc_result[0][2]) * ORI_IMG_SIZE)
     rdy = int((loc_result[0][1] + SIZE_RATIO * loc_result[0][2]) * ORI_IMG_SIZE) 
 
     luy, lux = max(0, luy), max(0, lux)
-    # print('hole_rect:{}'.format([lux, luy, rdx, rdy]))
-    hole_img = img[:, luy:rdy, lux:rdx, :]
+    rdx, rdy = min(rdx, 80), min(rdy, 80)
+    length = rdx - lux
+    height = rdy - luy
+    minor = length - height
+    hole_img = img[0][luy:rdy, lux:rdx, :]
+
+    # print('\n', hole_img.shape)
+    if minor > 0:
+        # print('1')
+        hole_img = cv2.copyMakeBorder(hole_img, minor // 2, minor - minor // 2, 0, 0, cv2.BORDER_REPLICATE)
+    elif minor < 0:
+        # print('2', (-minor // 2), (-minor) - (-minor // 2))
+        hole_img = cv2.copyMakeBorder(hole_img, 0, 0, (-minor // 2), (-minor) - (-minor // 2), cv2.BORDER_REPLICATE)
+    # print(hole_img.shape)
+    hole_img = np.expand_dims(hole_img, axis=0)
+
+    # print('\n')
+    #
+
+
+
     #输出图hole_img
 
     NORMAL_IMG_SIZE = 48
@@ -135,16 +152,17 @@ def main(img_path):
     normal_hole = Preprocess4Defect(normal_hole)  ########
     
     # 运行分类网络0
+    all_score = []
     defect_count = 0
-    DEFECT_TH = 0.48 ##########
+    DEFECT_TH = dt ##########
     for i in range(NUM_CLA_MODEL):
         cla_result = cla_models[i].predict(normal_hole)
         # print('cla_result_{}:{}'.format(i, cla_result))
-
+        all_score.append(cla_result[0][0])
         if cla_result[0][0] > DEFECT_TH:
             defect_count += 1
 
-    return defect_count, hole_img
+    return defect_count, hole_img, all_score
     # 投票选出最终结果
     # if defect_count >= 2:
     #     print(defect_count, 'final:defect')
@@ -152,18 +170,33 @@ def main(img_path):
     #     print(defect_count, 'final:normal')
 
 if __name__ == '__main__':
-    wrong_neg = 0
-    dir = r'C:\Users\pc\Desktop\HoleCode\v2.4.1\pos'
+
+    dir = r'C:\Users\pc\Desktop\HoleCode\Normalized_Data\test'
     all_paths = get_all_path(dir)
+
+    DEFECT_TH = 0.4
+    wrong_neg = 0
+    wrong_pos = 10000
     for path in tqdm(all_paths):
-        try:
-            defect_count, hole_img = main(path)
-            if defect_count < 2:
+        # try:
+        defect_count, hole_img, score = main(path, DEFECT_TH)
+        gt = path.split('\\')[-1].split('!')[1]
+        if gt == 'neg':
+            if defect_count >= 2:
                 wrong_neg += 1
                 filepath = "C:\\Users\\pc\\Desktop\\HoleCode\\test_result\\" + str(defect_count) + '_' + str(path.split('\\')[-1])
 
-                cv2.imwrite(filepath, hole_img[0] * 255)
+                # cv2.imwrite(filepath, hole_img[0] * 255)
 
-        except:
-            print(path)
+        if gt == 'pos':
+            if defect_count < 2:
+                wrong_pos += 1
+                # print(defect_count, score)
+                filepath = "C:\\Users\\pc\\Desktop\\HoleCode\\test_result\\" + str(defect_count) + '_' + str(
+                    path.split('\\')[-1])
+
+                # cv2.imwrite(filepath, hole_img[0] * 255)
+    print('\nDEFECT_TH', DEFECT_TH)
+    print('虚警:', wrong_neg, int(wrong_neg / 582 * 100), '%')
+    print('漏检', wrong_pos-10000, int((wrong_pos-10000) / 57 * 100), '%')
 

@@ -18,5 +18,5 @@ with tf.Session() as sess:
         output_node_names)
 
     # Save the frozen graph
-    with open('twice2.pb', 'wb') as f:
+    with open('3and2x2.pb', 'wb') as f:
         f.write(frozen_graph_def.SerializeToString())

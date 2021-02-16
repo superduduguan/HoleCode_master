@@ -19,10 +19,7 @@ INPUT_SIZE_H = 48
 POOLING_SCALE = 16
 
 IMAGE_DIR = '/home/vision-02/Hole_Detection/Hole_Data/Normalized_Data/train/'
-# IMGAE_TEST_DIR = '/home/vision-02/Hole_Detection/Hole_Data/Normalized_Data/test/'
-#IMGAE_TEST_DIR = '/home/vision-02/Hole_Detection/Hole_Data/Normalized_Data_v89/'
 IMGAE_TEST_DIR = '/home/vision-02/Hole_Detection/Hole_Data/Data20201207/Normalized_Data_v2/'
-# LABEL_DIR = '/home/vision-02/Hole_Detection/Hole_Data/labels_clean/'
 MODEL_PATH = '/home/vision-02/Hole_Detection/Hole_DefectCenterv2/logs/20201110_2131/'
 FOLD_NUM = 5
 IGNORE_GROUP = []

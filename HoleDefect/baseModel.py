@@ -13,9 +13,9 @@ class BaseModel(object):
     def __init__(self,
                  dataset=None,
                  logdir='logs',
-                 in_size_h=352,
-                 in_size_w=608,
-                 pool_scale=8,
+                 in_size_h=48,
+                 in_size_w=48,
+                 pool_scale=16,
                  weight_decay=0.0001,
                  base_lr=0.001,
                  epoch=50,
@@ -24,7 +24,6 @@ class BaseModel(object):
                  lr_decay_freq=4,
                  batch_size=8,
                  gpu_memory_fraction=0.2,   # 1.0
-                 train_vars='segm',
                  training=True,
                  w_summary=True,
                  alpha=0.6,
@@ -57,7 +56,6 @@ class BaseModel(object):
         self.lr_decay = lr_decay
         self.lr_decay_freq = lr_decay_freq
         self.batch_size = batch_size
-        self.train_vars = train_vars
         
         #   step learning rate policy
         self.global_step = tf.Variable(0, trainable=False)

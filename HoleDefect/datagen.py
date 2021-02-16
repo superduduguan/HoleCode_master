@@ -10,7 +10,7 @@ import json
 from albumentations import HorizontalFlip, ShiftScaleRotate, GaussNoise, \
     MedianBlur, RandomBrightnessContrast, Compose, VerticalFlip
 
-
+txtdir = 'C:\\Users\\pc\\Desktop\\HoleCode\\Normalized_Data\\'
 class DataGenerator(object):
     
     def __init__(self,
@@ -45,6 +45,7 @@ class DataGenerator(object):
         for filename in os.listdir(self.image_dir):
             samplename = filename[:-3]
             img_path = os.path.join(self.image_dir, filename)
+            # print(img_path)
             cat = filename.split('!')[1]
             # FP = 0
             if cat in ['pos']:
@@ -53,8 +54,8 @@ class DataGenerator(object):
                 classific = 0
                 if filename.split('!')[0] != 'v1.1':
                     classific = 1
-            else:
-                raise ValueError('Unspecified class: {}'.format(cat))
+            # else:
+            #     raise ValueError('Unspecified class: {}'.format(cat))
                 
             image = self.load_image(img_path)
             image = cv2.resize(image, (self.in_size_w, self.in_size_h))
@@ -81,7 +82,7 @@ class DataGenerator(object):
         # self.train_set = self.train_table[num_val:]
         self.train_set, self.val_set = [], []
         pos_val_num = 0
-        with open(str(self.val_group) + '/train.txt', 'r') as f:
+        with open(txtdir + str(self.val_group) + '/train.txt', 'r') as f:
             # for i in range(len(self.train_set)):
             #     f.write(self.train_set[i] + '\n')
             while True:
@@ -89,7 +90,7 @@ class DataGenerator(object):
                 if not lines:
                     break
                 self.train_set.append(lines)
-        with open(str(self.val_group) + '/test.txt', 'r') as f:
+        with open(txtdir + str(self.val_group) + '/test.txt', 'r') as f:
             # for i in range(len(self.val_set)):
             while True:
                 lines = f.readline().strip()
