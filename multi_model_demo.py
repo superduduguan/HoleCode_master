@@ -183,7 +183,7 @@ if __name__ == '__main__':
         gt = path.split('\\')[-1].split('!')[1]
         GT.append(gt)
 
-    for thr in [0.1, 0.2, 0.25, 0.3, 0.4, 0.41, 0.42, 0.43, 0.45, 0.48, 0.51]:
+    for thr in [0.41]:
         wrong_neg = 0
         wrong_pos = 0
         for i in range(len(GT)):
@@ -210,6 +210,6 @@ if __name__ == '__main__':
                     # cv2.imwrite(filepath, hole_img[0] * 255)
 
         print('\nDEFECT_TH', thr)
-        print('虚警:', wrong_neg, int(wrong_neg / 728 * 1000) / 10, '%')
-        print('漏检', wrong_pos, int(wrong_pos / 72 * 1000) / 10, '%')
+        print('虚警:', wrong_neg)
+        print('漏检', wrong_pos)
 
