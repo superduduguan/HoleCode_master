@@ -6,7 +6,7 @@ from model import Model
 
 nums = ['0', '1', '2', '3', '4']
 for num in nums:
-    MODEL_PATH = 'C:\\Users\\pc\\Desktop\\HoleCode_master\\HoleDefect\\logs\\20210213_2329\\' + num + r'\model.ckpt-249'
+    MODEL_PATH = 'C:\\Users\\pc\\Desktop\\HoleCode_master\\HoleDefect\\logs\\20210218_1049\\' + num + r'\model.ckpt-59'
 
     def freeze_mobilenet(meta_file):
 

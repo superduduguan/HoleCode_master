@@ -1,3 +1,112 @@
+"""
+Set Configurations and Hyperparameters.
+Launch the training process.
+"""
+import os
+from datagen import DataGenerator
+from model import Model
+from datetime import datetime
+now = datetime.now()
+import cv2
+import numpy as np
+
+
+# Configurations and hyper-params
+IMAGE_DIR = 'C:\\Users\\pc\\Desktop\\HoleCode\\Normalized_Data\\train\\' #train
+# LABEL_DIR = '/home/vision-02/Hole_Detection/Hole_Data/labels_clean/'
+LOGDIR = "logs/%d%02d%02d_%02d%02d/" %(
+    now.year, now.month, now.day, now.hour, now.minute)
+
+INPUT_SIZE_W = 48 # 1224
+INPUT_SIZE_H = 48 # 512
+POOLING_SCALE = 16
+
+VAL_RATIO = 0.2
+
+WEIGHT_DECAY = 4e-5
+BASE_LR = 1e-2
+BATCH_SIZE = 256
+EPOCH = 50
+EPOCH_SIZE = 8209 //BATCH_SIZE # 10421
+LR_DECAY = 0.9
+LR_DECAY_FREQ = 2
+GPU_MEMORY_FRACTION = 0.2  #1.0
+
+FOLD_NUM = 5
+
+
+# Prepare the dataset
+for i in range(FOLD_NUM):
+    print ('--Preparing Dataset')
+    dataset = DataGenerator(image_dir=IMAGE_DIR,
+                            in_size_h=INPUT_SIZE_H,
+                            in_size_w=INPUT_SIZE_W,
+                            pool_scale=POOLING_SCALE,
+                            val_ratio=VAL_RATIO,
+                            val_group=i)
+    dataset._create_train_table()
+    dataset._randomize()
+    dataset._create_sets()
+
+    # Build the model and train
+    print ('--Initializing the model')
+
+
+    model = Model(dataset=dataset,
+                  logdir=LOGDIR + str(i) + '/',
+                  in_size_h=INPUT_SIZE_H,
+                  in_size_w=INPUT_SIZE_W,
+                  pool_scale=POOLING_SCALE,
+                  weight_decay=WEIGHT_DECAY,
+                  base_lr=BASE_LR,
+                  epoch=EPOCH,
+                  epoch_size=EPOCH_SIZE,
+                  lr_decay=LR_DECAY,
+                  lr_decay_freq=LR_DECAY_FREQ,
+                  batch_size=BATCH_SIZE,
+                  gpu_memory_fraction=GPU_MEMORY_FRACTION)
+
+    model.BuildModel()
+    model.train()
+
+print('\nfinish trainning')
+import os
+import sys
+import tensorflow as tf
+slim = tf.contrib.slim
+from model import Model
+
+nums = ['0', '1', '2', '3', '4']
+for num in nums:
+    MODEL_PATH = 'C:\\Users\\pc\\Desktop\\HoleCode_master\\HoleDefect\\' + LOGDIR + num + r'\model.ckpt-' + str(EPOCH-1)
+
+    def freeze_mobilenet(meta_file):
+
+        tf.reset_default_graph()
+        # model = AttModel(training=False,w_summary=False)
+        model = Model(training=False,w_summary=False)
+        model.BuildModel()
+
+        output_node_names = ['HoleDefect/Classfication/dense/BiasAdd']
+        # output_node_names = ['AnomalyDetection/ClassResult']
+
+        output_pb_name = 'HoleDefect' + num + '.pb'
+
+        rest_var = slim.get_variables_to_restore()
+
+        with tf.Session() as sess:
+            graph = tf.get_default_graph()
+            input_graph_def = graph.as_graph_def()
+
+            saver = tf.train.Saver(rest_var)
+            saver.restore(sess, meta_file)
+            output_graph_def = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, output_node_names)
+            tf.train.write_graph(output_graph_def, "./", output_pb_name, as_text=False)
+
+
+    freeze_mobilenet(MODEL_PATH)
+print('\nfinish transforming')
+
 # encoding: utf-8
 
 import os
@@ -88,18 +197,18 @@ def get_all_path(input_dir):
                 all_paths.append(os.path.join(rootdir, filename))
     return all_paths
 
-def main(img_path):
+def mainx(img_path):
     # 获取当前文件所在目录
     cur_path = os.path.abspath(__file__)
     cur_dir = os.path.dirname(cur_path)
     # 载入定位网络
-    loc_model_path = os.path.join(cur_dir, 'model/position/3and2x2.pb')
+    loc_model_path = '../model/position/3and2x2.pb'
     loc_model = LocPbModel(loc_model_path)
     # 创建分类网络
     NUM_CLA_MODEL = 5
     cla_models = []
     for i in range(NUM_CLA_MODEL):
-        cla_model_path = 'model/detection/HoleDefect{}.pb'.format(i)
+        cla_model_path = 'HoleDefect{}.pb'.format(i)
         cla_model_path = os.path.join(cur_dir, cla_model_path)
         cla_models.append(ClaPbModel(cla_model_path))
 
@@ -178,12 +287,12 @@ if __name__ == '__main__':
     GT = []
     for path in tqdm(all_paths):
         # try:
-        hole_img, score = main(path)
+        hole_img, score = mainx(path)
         ALLSCORE.append(score)
         gt = path.split('\\')[-1].split('!')[1]
         GT.append(gt)
 
-    for thr in [0.1, 0.2, 0.25, 0.3, 0.4, 0.41, 0.42, 0.43, 0.45, 0.48, 0.51]:
+    for thr in [0.1, 0.2, 0.25, 0.3, 0.4, 0.43, 0.45, 0.48, 0.51]:
         wrong_neg = 0
         wrong_pos = 0
         for i in range(len(GT)):
@@ -210,6 +319,6 @@ if __name__ == '__main__':
                     # cv2.imwrite(filepath, hole_img[0] * 255)
 
         print('\nDEFECT_TH', thr)
-        print('虚警:', wrong_neg, int(wrong_neg / 728 * 1000) / 10, '%')
-        print('漏检', wrong_pos, int(wrong_pos / 72 * 1000) / 10, '%')
+        print('虚警:', wrong_neg, int(wrong_neg / 582 * 1000) / 10.0, '%') # 728
+        print('漏检', wrong_pos, int(wrong_pos / 57 * 1000) / 10.0, '%') # 72
 
