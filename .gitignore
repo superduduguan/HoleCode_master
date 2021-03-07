@@ -1,5 +1,6 @@
 C:\Users\pc\Desktop\HoleCode_master\HolePosition\logs\*
 C:\Users\pc\Desktop\HoleCode_master\HoleDefect\logs\*
+.tool/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
