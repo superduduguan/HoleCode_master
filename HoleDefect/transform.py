@@ -6,13 +6,13 @@ from model import Model
 
 nums = ['0', '1', '2', '3', '4']
 for num in nums:
-    MODEL_PATH = 'C:\\Users\\pc\\Desktop\\HoleCode_master\\HoleDefect\\logs\\20210218_1049\\' + num + r'\model.ckpt-59'
+    MODEL_PATH = 'C:\\Users\\pc\\Desktop\\HoleCode_master\\HoleDefectNeg\\logs\\20210318_0154\\' + num + r'\model.ckpt-73'
 
     def freeze_mobilenet(meta_file):
 
         tf.reset_default_graph()
         # model = AttModel(training=False,w_summary=False)
-        model = Model(training=False,w_summary=False)
+        model = Model(training=False, w_summary=False)
         model.BuildModel()
 
         output_node_names = ['HoleDefect/Classfication/dense/BiasAdd']

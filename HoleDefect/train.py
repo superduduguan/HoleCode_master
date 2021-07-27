@@ -9,11 +9,12 @@ from datetime import datetime
 now = datetime.now()
 import cv2
 import numpy as np
+# np.set_printoptions(threshold=np.inf)
 
 
 # Configurations and hyper-params
-IMAGE_DIR = 'C:\\Users\\pc\\Desktop\\HoleCode\\Normalized_Data\\train\\' #train
-# LABEL_DIR = '/home/vision-02/Hole_Detection/Hole_Data/labels_clean/'
+IMAGE_DIR = 'C:\\Users\\pc\\Desktop\\ResineHole-dataset\\train\\'
+
 LOGDIR = "logs/%d%02d%02d_%02d%02d/" %(
     now.year, now.month, now.day, now.hour, now.minute)
 
@@ -26,11 +27,11 @@ VAL_RATIO = 0.2
 WEIGHT_DECAY = 4e-5
 BASE_LR = 1e-2
 BATCH_SIZE = 256
-EPOCH = 250
-EPOCH_SIZE = 10421//BATCH_SIZE
+EPOCH = 200
+EPOCH_SIZE = 6668//BATCH_SIZE #only train
 LR_DECAY = 0.9
 LR_DECAY_FREQ = 2
-GPU_MEMORY_FRACTION = 0.3  #1.0
+GPU_MEMORY_FRACTION = 0.5  #1.0
 
 FOLD_NUM = 5
 

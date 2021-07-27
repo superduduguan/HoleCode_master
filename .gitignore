@@ -146,3 +146,15 @@ dmypy.json
 cython_debug/
 *.bmp
 *.data
+*.index
+*.data-00000-of-00001
+*.meta
+*.DESKTOP-JVDKJJ4
+HoleDefect/logs/20210727_2226/3/checkpoint
+HoleDefect/logs/20210727_2215/0/checkpoint
+HoleDefect/logs/20210727_2212/0/checkpoint
+HoleDefect/logs/20210727_2222/0/checkpoint
+HoleDefect/logs/20210727_2225/0/checkpoint
+HoleDefect/logs/20210727_2226/0/checkpoint
+HoleDefect/logs/20210727_2226/1/checkpoint
+HoleDefect/logs/20210727_2226/2/checkpoint
