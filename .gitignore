@@ -1,5 +1,9 @@
 C:\Users\pc\Desktop\HoleCode_master\HolePosition\logs\*
 C:\Users\pc\Desktop\HoleCode_master\HoleDefect\logs\*
+example\normalized\*
+example\origin\*
+example\result\*
+
 .tool/
 
 # Byte-compiled / optimized / DLL files
@@ -140,3 +144,5 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+*.bmp
+*.data

@@ -6,9 +6,14 @@
 '''
 
 # encoding: utf-8
+import warnings
+warnings.filterwarnings("ignore")
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 import numpy as np
 import tensorflow as tf
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 import tensorflow.gfile as gfile
 import cv2
 import pickle
@@ -145,7 +150,7 @@ if __name__ == '__main__':
     # 获取当前文件所在目录
     cur_path = os.path.abspath(__file__)
     cur_dir = os.path.dirname(cur_path)
-    SAMPLE_DIR = r'D:\ResineHole-dataset\subset_0001\test'
+    SAMPLE_DIR = os.path.join(cur_dir, 'example/origin')
 
     pb_path = os.path.join(cur_dir, 'model\HolePosition\HolePosition.pb')
     paths = get_all_path(SAMPLE_DIR)
@@ -168,36 +173,45 @@ if __name__ == '__main__':
             op = sess.graph.get_tensor_by_name('HoleDetection/LocationResult:0')
             _input = np.expand_dims(img, 0)
             a = sess.run(op,  feed_dict={input_x: _input})[0]
-            RATIO = 0.9
+            RATIO = 1.05
             lux = int((a[0] - RATIO * a[2]) * 80)
             luy = int((a[1] - RATIO * a[2]) * 80)
             rdx = int((a[0] + RATIO * a[2]) * 80)
             rdy = int((a[1] + RATIO * a[2]) * 80)
-
             luy, lux = max(0, luy), max(0, lux)
             rdx, rdy = min(rdx, 80), min(rdy, 80)
+            hole_img = img[luy:rdy, lux:rdx, :]
+
             length = rdx - lux
             height = rdy - luy
             minor = length - height
-            hole_img = img[luy:rdy, lux:rdx, :]
-
-
-
             if minor > 0:
                 hole_img = cv2.copyMakeBorder(hole_img, minor // 2, minor - minor // 2, 0, 0, cv2.BORDER_REPLICATE)
             elif minor < 0:
                 hole_img = cv2.copyMakeBorder(hole_img, 0, 0, (-minor // 2), (-minor) - (-minor // 2), cv2.BORDER_REPLICATE)
 
-            name = path.split('\\')[-1]
-            destdir = os.path.join(cur_dir, 'example/normalized', path.split('\\')[4] + '!' + name)
+            alpha = 8
+            beta = 1.3
+            center = np.array([hole_img.shape[0]//2, hole_img.shape[1]//2])
+            for i in range(hole_img.shape[0]):
+                for j in range(hole_img.shape[1]):
+                    for k in range(hole_img.shape[2]):
+                        new_dist = max(0.3 * hole_img.shape[0] + 2, np.linalg.norm(center-np.array([i, j]))) - 0.3 * hole_img.shape[0] - 2
+                        x = hole_img[i][j][k]
+                        hole_img[i][j][k] = hole_img[i][j][k] / (1 + (new_dist / alpha) ** beta)
+                        # print('i=', i, ', j=', j, ', dist=', np.linalg.norm(center-np.array([i, j])), ', new_disk=', new_dist, ', weight', 1 / (1 + (new_dist / alpha) ** beta), ', para_old', x, ', para_new', hole_img[i][j][k])
+            
+            # hole_img = cv2.circle(hole_img, (hole_img.shape[0]//2, hole_img.shape[1]//2), int(0.3 * hole_img.shape[0]) + 2, (0, 0, 255))
             hole_img = cv2.resize(hole_img, (48, 48))
 
+            name = path.split('\\')[-1]
             if height < 25:
                 print(path, ' is too small...Pay attention!')
-
                 tdir = os.path.join(cur_dir, 'example/toosmall', path.split('\\')[4] + '!' + name)
                 cv2.imwrite(tdir, hole_img * 255)
                 continue
+            
+            destdir = os.path.join(cur_dir, 'example/normalized', path.split('\\')[4] + '!' + name)
             cv2.imwrite(destdir, hole_img * 255)
         except Exception as e:
             print(path, e)
@@ -216,12 +230,9 @@ if __name__ == '__main__':
 
         img = np.expand_dims(img, axis=0)
         img = img.astype('float64')
-        # print(img.shape)
-        # print(img)
         normal_hole = Preprocess4Defect(img)
-        # print(normal_hole.shape)
         IMG.append(normal_hole)
-        gt = path.split('\\')[-1].split('!')[0]
+        gt = path.split('\\')[-1].split('!')[-2]
         GT.append(gt)
 
 
@@ -233,6 +244,7 @@ if __name__ == '__main__':
 
     scores = list(np.array(ALLSCORE).squeeze(axis=-1).T)
     AS = [list(i) for i in scores]
+    print(AS)
 
     with open(os.path.join(cur_dir, 'example/result/ALLSCORE.data'), 'wb') as f:
         pickle.dump(AS, f)
@@ -279,11 +291,13 @@ if __name__ == '__main__':
                 if defect_count >= 2:
                     wrong_neg += 1
                     if thr == 0.12:
+                        pass
                         # copyfile(path, os.path.join(r'C:\Users\pc\Desktop\v0.0.2\example\error\wrong_neg', path.split('\\')[-1]))
             if gt == 'pos':
                 if defect_count < 2:
                     wrong_pos += 1
                     if thr == 0.12:
+                        pass
                         # copyfile(path, os.path.join(r'C:\Users\pc\Desktop\v0.0.2\example\error\wrong_pos', path.split('\\')[-1]))
 
         print('\nDEFECT_Thr:', thr)
