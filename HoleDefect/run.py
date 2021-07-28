@@ -92,7 +92,7 @@ from model import Model
 
 nums = ['0', '1', '2', '3', '4']
 for num in nums:
-    MODEL_PATH = 'C:\\Users\\pc\\Desktop\\HoleCode_master\\HoleDefectNeg\\' + LOGDIR + num + '\\model.ckpt-' + str(EPOCH-1)
+    MODEL_PATH = os.path.join(cur_dir, LOGDIR + num + '\\model.ckpt-' + str(EPOCH-1))  
 
     def freeze_mobilenet(meta_file):
 

@@ -73,7 +73,6 @@ class BaseModel(object):
         self.w_summary = w_summary
 
         self.img = None
-        # self.gtmap = None
         self.gt = None
 
         self.summ_scalar_list = []
