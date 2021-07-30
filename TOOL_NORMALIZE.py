@@ -119,7 +119,7 @@ if __name__ == '__main__':
     cur_dir = os.path.dirname(cur_path)
     SAMPLE_DIR = r'C:\Users\pc\Desktop\大分类'
 
-    pb_path = os.path.join(cur_dir, 'model\HolePosition\HolePosition.pb')
+    pb_path = os.path.join(cur_dir, 'model/HolePosition/HolePosition.pb')
     paths = get_all_path(SAMPLE_DIR)
     
     sess = tf.Session()
