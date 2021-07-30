@@ -16,6 +16,7 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 import argparse
+from shutil import copyfile
 
 
 parser = argparse.ArgumentParser('argument for training')
@@ -268,6 +269,9 @@ if __name__ == '__main__':
     cnt = [0 for i in range(10)]
     dic_right.update(list(zip(cats, cnt)))
     dic_all.update(list(zip(cats, cnt)))
+    time_stamp = "%d%02d%02d_%02d%02d%02d" % (now.year, now.month, now.day, now.hour, now.minute, now.second)
+    os.mkdir(os.path.join(cur_dir, '../example/error/' + time_stamp))
+
     for x in range(len(GT)):
         dic_all[GT[x]] += 1
         if predicts[x] == GT[x]:
@@ -275,6 +279,12 @@ if __name__ == '__main__':
             dic_right[GT[x]] += 1
         else:
             print(int(GT[x])+1, 'to', int(predicts[x])+1)
+            folder_name = str(int(GT[x])+1) + 'to' + str(int(predicts[x])+1)
+            folder_path = os.path.join(cur_dir, '../example/error/' + time_stamp, folder_name)
+            if not os.path.exists(folder_path):
+                os.mkdir(folder_path)
+            copyfile(PATH[x], os.path.join(folder_path, PATH[x].split('\\')[-1]))
+
     for cat, all in dic_all.items():
         dic_all[cat] = dic_right[cat] / all * 100
     print('acc:', correct / len(GT))

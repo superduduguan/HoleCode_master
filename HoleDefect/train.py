@@ -38,7 +38,7 @@ FOLD_NUM = 5
 
 # Prepare the dataset
 for i in range(FOLD_NUM):
-    print ('--Preparing Dataset')
+    print('--Preparing Dataset')
     dataset = DataGenerator(image_dir=IMAGE_DIR,
                             in_size_h=INPUT_SIZE_H,
                             in_size_w=INPUT_SIZE_W,
@@ -50,7 +50,7 @@ for i in range(FOLD_NUM):
     dataset._create_sets()
 
     # Build the model and train
-    print ('--Initializing the model')
+    print('--Initializing the model')
 
 
     model = Model(dataset=dataset,
