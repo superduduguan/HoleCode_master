@@ -142,14 +142,14 @@ if __name__ == '__main__':
             hole_img = cv2.resize(hole_img, (48, 48))
 
             oldname = path.split('\\')[-1]
-            newname = str(int(path.split('\\')[-3]) - 1) + '!' + oldname
+            newname = oldname
             if height < 25:
                 print(path, ' is too small...Pay attention!')
                 tdir = os.path.join(cur_dir, 'example/toosmall', newname)
                 cv2.imwrite(tdir, hole_img * 255)
                 continue
             
-            destdir = r'C:\Users\pc\Desktop\ALL_NORMALIZED'
+            destdir = os.path.join(r'C:\Users\pc\Desktop\ALL_NORMALIZED', newname)
             cv2.imwrite(destdir, hole_img * 255)
         except Exception as e:
             print(path, e)
