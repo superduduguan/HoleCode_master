@@ -24,7 +24,7 @@ if __name__ == '__main__':
     # 获取当前文件所在目录
     cur_path = os.path.abspath(__file__)
     cur_dir = os.path.dirname(cur_path)
-    SAMPLE_DIR = os.path.join(cur_dir, 'example/normalized')
+    SAMPLE_DIR = r'C:\Users\pc\Desktop\dafenlei0809rename'  # GAI
     paths = get_all_path(SAMPLE_DIR)
     if os.path.exists(os.path.join(cur_dir, 'example/dataset')):
         rmtree(os.path.join(cur_dir, 'example/dataset'))
@@ -49,20 +49,31 @@ if __name__ == '__main__':
         src = path
         c = path.split('\\')[-1].split('!')[0]
 
-        if (c == '4' or c == '5') and (np.random.rand() < 0.4):  #太多了 用一部分就行
+        if (c == '4') and (np.random.rand() < 0.25):  #太多了 用一部分就行
             continue
 
-        if (c == '6') and (np.random.rand() < 0.1):
+        if (c == '5') and (np.random.rand() < 0.1):
             continue
 
-        if cnt_dic[c] != 10 and np.random.rand() > 0.8:
+        if (c == '3') and (np.random.rand() < 0.1):
+            continue
+
+        if cnt_dic[c] != 200 and np.random.rand() > 0.6:
             cnt_dic[c] += 1
             dest = os.path.join(cur_dir, 'example/dataset/test', path.split('\\')[-1])
             copyfile(src, dest)
             continue
 
-        if (c == '7') and (np.random.rand() < 0.15):
+        if (c == '7') and (np.random.rand() < 0.35):
             copyfile(src, os.path.join(cur_dir, 'example/dataset/train', ''.join(path.split('\\')[-1].split('.')[:-1]) + 'x.bmp'))
+            dest = os.path.join(cur_dir, 'example/dataset/train', path.split('\\')[-1])
+            copyfile(src, dest)
+            continue
+        
+        if (c == '8') and (np.random.rand() < 0.25):
+            copyfile(src, os.path.join(cur_dir, 'example/dataset/train', ''.join(path.split('\\')[-1].split('.')[:-1]) + 'x.bmp'))
+            dest = os.path.join(cur_dir, 'example/dataset/train', path.split('\\')[-1])
+            copyfile(src, dest)
             continue
 
         dest = os.path.join(cur_dir, 'example/dataset/train', path.split('\\')[-1])
@@ -107,31 +118,31 @@ if __name__ == '__main__':
         random.shuffle(sets)
 
         for sample_idx in range(len(sets)):
-            if sample_idx % 8 == 0:
+            if sample_idx % 18 == 0:
                 traintxt[1].append(sets[sample_idx] + '\n')
                 traintxt[2].append(sets[sample_idx] + '\n')
                 traintxt[3].append(sets[sample_idx] + '\n')
                 traintxt[4].append(sets[sample_idx] + '\n')
                 valtxt[0].append(sets[sample_idx] + '\n')
-            elif sample_idx % 8 == 1:
+            elif sample_idx % 18 == 1:
                 traintxt[0].append(sets[sample_idx] + '\n')
                 traintxt[2].append(sets[sample_idx] + '\n')
                 traintxt[3].append(sets[sample_idx] + '\n')
                 traintxt[4].append(sets[sample_idx] + '\n')
                 valtxt[1].append(sets[sample_idx] + '\n')
-            elif sample_idx % 8 == 2:
+            elif sample_idx % 18 == 2:
                 traintxt[1].append(sets[sample_idx] + '\n')
                 traintxt[0].append(sets[sample_idx] + '\n')
                 traintxt[3].append(sets[sample_idx] + '\n')
                 traintxt[4].append(sets[sample_idx] + '\n')
                 valtxt[2].append(sets[sample_idx] + '\n')
-            elif sample_idx % 8 == 3:
+            elif sample_idx % 18 == 3:
                 traintxt[1].append(sets[sample_idx] + '\n')
                 traintxt[2].append(sets[sample_idx] + '\n')
                 traintxt[0].append(sets[sample_idx] + '\n')
                 traintxt[4].append(sets[sample_idx] + '\n')
                 valtxt[3].append(sets[sample_idx] + '\n')
-            elif sample_idx % 8 == 4:
+            elif sample_idx % 18 == 4:
                 traintxt[1].append(sets[sample_idx] + '\n')
                 traintxt[2].append(sets[sample_idx] + '\n')
                 traintxt[3].append(sets[sample_idx] + '\n')

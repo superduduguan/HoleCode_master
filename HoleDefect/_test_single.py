@@ -92,7 +92,7 @@ def defect(normal_hole):
     for i in range(NUM_CLA_MODEL):
         ts = "_%d%02d%02d_%02d%02d%02d.pb" % (now.year, now.month, now.day, now.hour, now.minute, now.second)
 
-        file_name = 'HoleDefect' + str(i) + '_' + '140_20210810_141023.pb'  # GAI
+        file_name = 'HoleDefect' + str(i) + '_' + '100_20210802_193011.pb'
         cla_model_path = os.path.join(cur_dir, 'model', file_name)
         cla_models.append(ClaPbModel(cla_model_path))
 
@@ -106,72 +106,46 @@ def defect(normal_hole):
 
 
 if __name__ == '__main__':
-    fol = [str(i+1) for i in range(10)]
-    Path = r'C:\Users\pc\Desktop\ALL_FORWORD3'  # GAI
-    if not os.path.exists(Path):
-        os.mkdir(Path)
-    for f in fol:
-        if os.path.exists(os.path.join(Path, f)):
-            rmtree(os.path.join(Path, f))
-        os.mkdir(os.path.join(Path, f))
-    print('testing on test dataset')
+
 
     # 获取当前文件所在目录
     cur_path = os.path.abspath(__file__)
     cur_dir = os.path.dirname(cur_path)
-    normdir = r'C:\Users\pc\Desktop\ALL_FORWORD2'  # GAI
+    normdir = 'C:/Users/pc/Desktop/ALL_FORWORD/9'
     all_paths = get_all_path(normdir)
     
+    # defect
+    ALLSCORE = []
+    PATH = []
+    IMG = []
+    for path in all_paths:
+        PATH.append(path)
+        img = cv2.imread(path)
+        img = np.expand_dims(img, axis=0)
+        img = img.astype('float64')
+        normal_hole = Preprocess4Defect(img)
+        IMG.append(normal_hole)
 
 
-    cnt = 0
-    while True:
-        cnt += 1
-        print(cnt)
+    IMG = np.array(IMG)
+    IMG = IMG.squeeze(axis=1)
+    ALLSCORE = defect(IMG)
+    scores = np.array(ALLSCORE)
+    scores = np.transpose(scores, (1, 0, 2))
+    samples = [list(i) for i in scores]  
+    
 
-        batch_paths = all_paths[:430]
-        all_paths = all_paths[430:] 
+    predicts = []
 
-        # defect
-        ALLSCORE = []
-        PATH = []
-        IMG = []
-        for path in batch_paths:
-            PATH.append(path)
-            img = cv2.imread(path)
-            img = np.expand_dims(img, axis=0)
-            img = img.astype('float64')
-            normal_hole = Preprocess4Defect(img)
-            IMG.append(normal_hole)
+    for sample in samples:  
+        scores = [list(j) for j in sample]  
+        SC = []
 
+        for score in scores:  
+            SC.append(myargmax(score))
+            score[myargmax(score)] = 0.0
 
-        IMG = np.array(IMG)
-        try:
-            IMG = IMG.squeeze(axis=1)
-        except:
-            quit()
-        ALLSCORE = defect(IMG)
-        scores = np.array(ALLSCORE)
-        scores = np.transpose(scores, (1, 0, 2))
-        samples = [list(i) for i in scores]  
+        mode = grade_mode(SC)[-1]
         
-
-        predicts = []
-
-        for sample in samples:  
-            scores = [list(j) for j in sample]  
-            SC = []
-
-            for score in scores:  
-                SC.append(myargmax(score))
-                score[myargmax(score)] = 0.0
-
-            mode = grade_mode(SC)[-1]
-            
-            predicts.append(str(mode + 1))
-
-
-        for index in range(len(batch_paths)):
-            src = batch_paths[index]
-            dest = os.path.join(Path, predicts[index], src.split('\\')[-1])
-            copyfile(src, dest)
+        predicts.append(str(mode))
+    print(predicts)

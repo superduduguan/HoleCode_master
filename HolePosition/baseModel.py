@@ -123,7 +123,7 @@ class BaseModel(object):
             #         [tf.nn.l2_loss(var) for var in trainable_vars], name='L2_Regularization')
             #     self.loss = self.class_loss
                 
-            self.summ_scalar_list.append(tf.summary.scalar("total loss", self.loss))
+            self.summ_scalar_list.append(tf.summary.scalar("total lossx", self.loss))
             self.summ_scalar_list.append(tf.summary.scalar("l2_regularization", self.l2_regular))
             self.summ_scalar_list.append(tf.summary.scalar("lr", self.learning_rate))
         print ("--Loss & Scalar_summary Built")

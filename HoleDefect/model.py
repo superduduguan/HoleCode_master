@@ -33,10 +33,15 @@ class Model(BaseModel):
             net = self._conv_bn_relu(net, 64, 3, 2, 'SAME', 'Conv4_1')
             net = self._conv_bn_relu(net, 64, 3, 1, 'SAME', 'Conv4_2')
 
+            # Downscale 32 ??
+            if self.xl:
+                net = self._conv_bn_relu(net, 64, 3, 2, 'SAME', 'Conv5_1')
+                net = self._conv_bn_relu(net, 64, 3, 1, 'SAME', 'Conv5_2')
+
 
             # Regression
             embedding = self._fc_bn_relu(net, 128, name='fc')
-            embedding = self._fc(embedding, 64, name='Embedding') # x, y, r
+            embedding = self._fc(embedding, 64, name='Embedding')  # x, y, r
 
             score = self._bn_relu(embedding, name='embedding_bn_relu')
             score = self._fc_bn_relu(score, 32, name='Classfication_1')

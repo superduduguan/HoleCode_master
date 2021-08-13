@@ -19,6 +19,9 @@ import cv2
 import pickle
 from tqdm import tqdm
 from shutil import copyfile
+from shutil import rmtree
+
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
  
 class PbModel:
@@ -87,10 +90,16 @@ if __name__ == '__main__':
     # 获取当前文件所在目录
     cur_path = os.path.abspath(__file__)
     cur_dir = os.path.dirname(cur_path)
-    SAMPLE_DIR = r'C:\Users\pc\Desktop\ALL_RAW'
+    SAMPLE_DIR = r'C:\Users\pc\Desktop\大分类'  # GAI
 
-    pb_path = os.path.join(cur_dir, 'model/HolePosition/HolePosition.pb')
+    pb_path = os.path.join(cur_dir, 'model/HolePosition/HolePosition.pb')  # GAI
     paths = get_all_path(SAMPLE_DIR)
+
+    # destfolder = r'C:\Users\pc\Desktop\ALL_NORMALIZED'
+    DEST_DIR = r'C:\Users\pc\Desktop\大分类_NORM'  #GAI
+
+
+
     
     sess = tf.Session()
     with gfile.FastGFile(pb_path, 'rb') as f:
@@ -102,57 +111,63 @@ if __name__ == '__main__':
     for path in tqdm(paths):
         if path.split('.')[-1] != 'bmp':
             continue
-        try:
-            src = path
-            img = load_img1(src)
-            sess.run(tf.global_variables_initializer())
-            input_x = sess.graph.get_tensor_by_name('input/img_in:0')
-            op = sess.graph.get_tensor_by_name('HoleDetection/LocationResult:0')
-            _input = np.expand_dims(img, 0)
-            a = sess.run(op,  feed_dict={input_x: _input})[0]
-            RATIO = 1.05
-            lux = int((a[0] - RATIO * a[2]) * 80)
-            luy = int((a[1] - RATIO * a[2]) * 80)
-            rdx = int((a[0] + RATIO * a[2]) * 80)
-            rdy = int((a[1] + RATIO * a[2]) * 80)
-            luy, lux = max(0, luy), max(0, lux)
-            rdx, rdy = min(rdx, 80), min(rdy, 80)
-            hole_img = img[luy:rdy, lux:rdx, :]
+        if path.split('\\')[6] == 'new':
+            continue
+        src = path
+        img = load_img1(src)
+        sess.run(tf.global_variables_initializer())
+        input_x = sess.graph.get_tensor_by_name('input/img_in:0')
+        op = sess.graph.get_tensor_by_name('HoleDetection/LocationResult:0')
+        _input = np.expand_dims(img, 0)
+        a = sess.run(op,  feed_dict={input_x: _input})[0]
+        RATIO = 1.05
+        lux = int((a[0] - RATIO * a[2]) * 80)
+        luy = int((a[1] - RATIO * a[2]) * 80)
+        rdx = int((a[0] + RATIO * a[2]) * 80)
+        rdy = int((a[1] + RATIO * a[2]) * 80)
+        luy, lux = max(0, luy), max(0, lux)
+        rdx, rdy = min(rdx, 80), min(rdy, 80)
+        hole_img = img[luy:rdy, lux:rdx, :]
 
-            length = rdx - lux
-            height = rdy - luy
-            minor = length - height
-            if minor > 0:
-                hole_img = cv2.copyMakeBorder(hole_img, minor // 2, minor - minor // 2, 0, 0, cv2.BORDER_REPLICATE)
-            elif minor < 0:
-                hole_img = cv2.copyMakeBorder(hole_img, 0, 0, (-minor // 2), (-minor) - (-minor // 2), cv2.BORDER_REPLICATE)
+        length = rdx - lux
+        height = rdy - luy
+        minor = length - height
+        if minor > 0:
+            hole_img = cv2.copyMakeBorder(hole_img, minor // 2, minor - minor // 2, 0, 0, cv2.BORDER_REPLICATE)
+        elif minor < 0:
+            hole_img = cv2.copyMakeBorder(hole_img, 0, 0, (-minor // 2), (-minor) - (-minor // 2), cv2.BORDER_REPLICATE)
 
-            alpha = 9.5
-            beta = 1.8
-            center = np.array([hole_img.shape[0]//2, hole_img.shape[1]//2])
-            for i in range(hole_img.shape[0]):
-                for j in range(hole_img.shape[1]):
-                    for k in range(hole_img.shape[2]):
-                        new_dist = max(0.3 * hole_img.shape[0] + 2, np.linalg.norm(center-np.array([i, j]))) - 0.3 * hole_img.shape[0] - 2
-                        x = hole_img[i][j][k]
-                        hole_img[i][j][k] = hole_img[i][j][k] * (-0.045 * new_dist + 1)
-                        # print('i=', i, ', j=', j, ', dist=', np.linalg.norm(center-np.array([i, j])), ', new_disk=', new_dist, ', weight', 1 / (1 + (new_dist / alpha) ** beta), ', para_old', x, ', para_new', hole_img[i][j][k])
-            
-            # hole_img = cv2.circle(hole_img, (hole_img.shape[0]//2, hole_img.shape[1]//2), int(0.3 * hole_img.shape[0]) + 2, (0, 0, 255))
-            hole_img = cv2.resize(hole_img, (48, 48))
+        alpha = 9.5
+        beta = 1.8
+        center = np.array([hole_img.shape[0]//2, hole_img.shape[1]//2])
+        for i in range(hole_img.shape[0]):
+            for j in range(hole_img.shape[1]):
+                for k in range(hole_img.shape[2]):
+                    new_dist = max(0.3 * hole_img.shape[0] + 2, np.linalg.norm(center-np.array([i, j]))) - 0.3 * hole_img.shape[0] - 2
+                    x = hole_img[i][j][k]
+                    hole_img[i][j][k] = hole_img[i][j][k] * (-0.045 * new_dist + 1)
 
-            oldname = path.split('\\')[-1]
-            newname = oldname
-            if height < 25:
-                print(path, ' is too small...Pay attention!')
-                tdir = os.path.join(cur_dir, 'example/toosmall', newname)
-                cv2.imwrite(tdir, hole_img * 255)
-                continue
-            
-            destdir = os.path.join(r'C:\Users\pc\Desktop\ALL_NORMALIZED', newname)
-            cv2.imwrite(destdir, hole_img * 255)
-        except Exception as e:
-            print(path, e)
+        hole_img = cv2.resize(hole_img, (48, 48))
+
+        oldname = path.split('\\')[-1]
+        newname = oldname  # GAI
+        newname = str(int(path.split('\\')[-3]) - 1) + '!' + oldname  # GAI
+        if height < 25:
+            # print(path, ' is too small...Pay attention!')
+            tdir = os.path.join(cur_dir, 'example/toosmall', newname)
+            cv2.imwrite(tdir, hole_img * 255)
+            continue
+
+        destfolder = os.path.join(DEST_DIR, path.split('\\')[5], path.split('\\')[6])
+
+        if not os.path.exists(os.path.join(DEST_DIR, path.split('\\')[5])):
+            os.mkdir(os.path.join(DEST_DIR, path.split('\\')[5]))
+        if not os.path.exists(destfolder):
+            os.mkdir(destfolder)
+
+        destdir = os.path.join(destfolder, newname)
+        cv2.imwrite(destdir, hole_img * 255)
+
     print('normalization finished')
 
 

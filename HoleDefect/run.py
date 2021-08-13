@@ -36,10 +36,15 @@ parser.add_argument('--predict',
                     type=bool,
                     default=False,
                     help='if predict?')
+parser.add_argument('--xl',
+                    type=bool,
+                    default=False,
+                    help='if xl?')
 args = parser.parse_args()
 EPOCH = args.ep
 BATCH_SIZE = args.bs
 l2 = args.l2
+xl = args.xl
 
 cur_path = os.path.abspath(__file__)
 cur_dir = os.path.dirname(cur_path)
@@ -57,8 +62,7 @@ VAL_RATIO = 0.2
 WEIGHT_DECAY = 4e-5
 BASE_LR = 1e-2
 VAL_BATCH_SIZE = 100
-
-EPOCH_SIZE = 2017//BATCH_SIZE  #only train
+EPOCH_SIZE = len(open(os.path.join(TEXTDIR, '0', 'train.txt'),'rU').readlines()) // BATCH_SIZE  
 LR_DECAY = 0.9
 LR_DECAY_FREQ = 2
 GPU_MEMORY_FRACTION = 0.3  #1.0
@@ -80,8 +84,7 @@ for i in range(FOLD_NUM):
     dataset._randomize()
     dataset._create_sets()
 
-    # Build the model and train
-    print('--Initializing the model')
+
 
 
     model = Model(dataset=dataset,
@@ -98,7 +101,8 @@ for i in range(FOLD_NUM):
                   batch_size=BATCH_SIZE,
                   val_batch_size=VAL_BATCH_SIZE,
                   gpu_memory_fraction=GPU_MEMORY_FRACTION,
-                  l2=l2)
+                  l2=l2,
+                  xl=xl)
 
     model.BuildModel()
     model.train()
@@ -121,11 +125,11 @@ for num in nums:
 
     tf.reset_default_graph()
 
-    model = Model(training=False, w_summary=False)
+    model = Model(training=False, w_summary=False, xl=xl)
     model.BuildModel()
 
     output_node_names = ['HoleDefect/Classfication/dense/BiasAdd']
-    output_pb_name = 'HoleDefect' + num + '_' + str(EPOCH) + "_%d%02d%02d_%02d%02d%02d.pb" % (now.year, now.month, now.day, now.hour, now.minute, now.second)
+    output_pb_name = 'HoleDefect' + num + '_' + str(EPOCH) + '_' + str(BATCH_SIZE) + '_' + str(xl) + "_%d%02d%02d_%02d%02d%02d.pb" % (now.year, now.month, now.day, now.hour, now.minute, now.second)
     rest_var = slim.get_variables_to_restore()
 
     with tf.Session() as sess:
@@ -212,7 +216,7 @@ def defect(normal_hole):
     cla_models = []
     for i in range(NUM_CLA_MODEL):
         ts = "_%d%02d%02d_%02d%02d%02d.pb" % (now.year, now.month, now.day, now.hour, now.minute, now.second)
-        file_name = 'HoleDefect' + str(i) + '_' + str(EPOCH) + ts
+        file_name = 'HoleDefect' + str(i) + '_' + str(EPOCH) + '_' + str(BATCH_SIZE) + '_' + str(xl) + ts
         if args.predict:
             file_name = 'HoleDefect' + str(i) + '_' + '100_20210802_193011.pb'
         cla_model_path = os.path.join(cur_dir, 'model', file_name)
@@ -229,7 +233,84 @@ def defect(normal_hole):
 
 if __name__ == '__main__':
 
-    print('testing on test dataset')
+    print('testing on training dataset')
+
+    # 获取当前文件所在目录
+    cur_path = os.path.abspath(__file__)
+    cur_dir = os.path.dirname(cur_path)
+    normdir = os.path.join(cur_dir, "../example/dataset/train")
+    all_paths = get_all_path(normdir)
+
+    # defect
+    ALLSCORE = []
+    GT = []
+    PATH = []
+    IMG = []
+    all = len(all_paths)
+    for path in tqdm(all_paths):
+        PATH.append(path)
+        img = cv2.imread(path)
+        img = np.expand_dims(img, axis=0)
+        img = img.astype('float64')
+        normal_hole = Preprocess4Defect(img)
+        IMG.append(normal_hole)
+        gt = path.split('\\')[-1].split('!')[0]
+        GT.append(gt)
+
+    IMG = np.array(IMG)
+    IMG = IMG.squeeze(axis=1)
+    ALLSCORE = defect(IMG)
+    scores = np.array(ALLSCORE)
+    scores = np.transpose(scores, (1, 0, 2))
+    samples = [list(i) for i in scores]  
+    
+
+    predicts = []
+    predicts2 = []
+    for sample in samples:  
+        scores = [list(j) for j in sample]  
+        SC = []
+        SC2  = []
+        for score in scores:  
+            SC.append(myargmax(score))
+            score[myargmax(score)] = 0.0
+            SC2.append(myargmax(score))
+        mode = grade_mode(SC)[-1]
+        mode2 = grade_mode(SC2)[-1]
+        predicts.append(str(mode))
+        predicts2.append(str(mode2))
+
+    correct = 0
+    dic_all = {}
+    dic_right = {}
+    cats = [str(i) for i in range(10)]
+    cnt = [0 for i in range(10)]
+    dic_right.update(list(zip(cats, cnt)))
+    dic_all.update(list(zip(cats, cnt)))
+    time_stamp = "%d%02d%02d_%02d%02d%02d" % (now.year, now.month, now.day, now.hour, now.minute, now.second)
+    
+
+    for x in range(len(GT)):
+        dic_all[GT[x]] += 1
+        if predicts[x] == GT[x] or GT[x] == predicts2[x]:
+            correct += 1
+            dic_right[GT[x]] += 1
+        else:
+            if (int(predicts[x]) + 1) * (int(GT[x]) + 1) == 30:
+                correct += 1
+                dic_right[GT[x]] += 1
+                continue
+            folder_name = str(int(GT[x])+1) + 'to' + str(int(predicts[x])+1) + ',' + str(int(predicts2[x])+1)
+
+    for cat, all in dic_all.items():
+        dic_all[cat] = dic_right[cat] / all * 100
+    print('acc:', correct / len(GT))
+    print(dic_all)
+
+
+if __name__ == '__main__':
+
+    print('testing on testing dataset')
 
     # 获取当前文件所在目录
     cur_path = os.path.abspath(__file__)
@@ -286,9 +367,11 @@ if __name__ == '__main__':
     time_stamp = "%d%02d%02d_%02d%02d%02d" % (now.year, now.month, now.day, now.hour, now.minute, now.second)
     os.mkdir(os.path.join(cur_dir, '../example/error/' + time_stamp))
 
+    err_dict = {}
+
     for x in range(len(GT)):
         dic_all[GT[x]] += 1
-        if predicts[x] == GT[x] or GT[x] == predicts2[x]:
+        if predicts[x] == GT[x]:  # or GT[x] == predicts2[x]:
             correct += 1
             dic_right[GT[x]] += 1
         else:
@@ -296,8 +379,8 @@ if __name__ == '__main__':
                 correct += 1
                 dic_right[GT[x]] += 1
                 continue
-            print(int(GT[x])+1, 'to', int(predicts[x])+1)
-            folder_name = str(int(GT[x])+1) + 'to' + str(int(predicts[x])+1) + ',' + str(int(predicts2[x])+1)
+            folder_name = str(int(GT[x])+1) + 'to' + str(int(predicts[x])+1)  # + ',' + str(int(predicts2[x])+1)
+            err_dict[folder_name] = err_dict.get(folder_name, 0) + 1
             folder_path = os.path.join(cur_dir, '../example/error/' + time_stamp, folder_name)
             if not os.path.exists(folder_path):
                 os.mkdir(folder_path)
@@ -307,5 +390,7 @@ if __name__ == '__main__':
         dic_all[cat] = dic_right[cat] / all * 100
     print('acc:', correct / len(GT))
     print(dic_all)
+    err_order = sorted(err_dict.items(), key=lambda x: x[1], reverse=False)
+    print(err_order)
     print('filename:', output_pb_name)
     print(args)

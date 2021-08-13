@@ -40,7 +40,8 @@ class BaseModel(object):
             alpha=0.6,
             beta=2,
             announce=False, 
-            l2=True):
+            l2=True, 
+            xl=False):
 
         # Configure GPU
         gpu_options = tf.GPUOptions(
@@ -51,6 +52,7 @@ class BaseModel(object):
         tf.reset_default_graph()
         self.sess = tf.Session(config=config)
         self.announce = announce
+        self.xl = xl
         # Set log dir
         self.log_dir = logdir
         self.writer = tf.summary.FileWriter(self.log_dir)
@@ -93,6 +95,7 @@ class BaseModel(object):
         self.gt = None
 
         self.summ_scalar_list = []
+        self.summ_scalar_list_TRAIN = []
         # self.summ_accuracy_list = []
         self.summ_axis_list = []
         self.summ_size_list = []
@@ -117,7 +120,6 @@ class BaseModel(object):
                                        ],
                                        name='class')
 
-        print("--Placeholder Built")
 
     def __build_train_op(self):
         """ 
@@ -147,12 +149,12 @@ class BaseModel(object):
                 self.loss += self.l2_regular
 
             self.summ_scalar_list.append(
-                tf.summary.scalar("total loss", self.loss))
+                tf.summary.scalar("total_loss_val", self.loss, family='val'))
             self.summ_scalar_list.append(
-                tf.summary.scalar("l2_regularization", self.l2_regular))
-            self.summ_scalar_list.append(
-                tf.summary.scalar("lr", self.learning_rate))
-        print("--Loss & Scalar_summary Built")
+                tf.summary.scalar("l2_regularization_val", self.l2_regular, family='val'))
+            self.summ_scalar_list_TRAIN.append(tf.summary.scalar("total_loss_train", self.loss, family='train'))
+            self.summ_scalar_list_TRAIN.append(tf.summary.scalar("l2_regularization_train", self.l2_regular, family='train'))
+    
 
         # Optimizer
         with tf.name_scope('optimizer'):
@@ -163,7 +165,7 @@ class BaseModel(object):
                     self.loss,
                     var_list=trainable_vars,
                     global_step=self.global_step)
-        print("--Optimizer Built")
+        
 
     def BuildModel(self):
         """ 
@@ -189,8 +191,9 @@ class BaseModel(object):
         if self.training:
             # merge all summary
             self.summ_scalar = tf.summary.merge(self.summ_scalar_list)
+            self.summ_scalar_TRAINING = tf.summary.merge(self.summ_scalar_list_TRAIN)
         self.writer.add_graph(self.sess.graph)
-        print("-- Model Built")
+        
 
     def restore_sess(self, model=None):
         """ 
@@ -252,6 +255,11 @@ class BaseModel(object):
                             ' train_loss: ', [loss, class_loss])
 
                     # Record validation results
+                    self.writer.add_summary(
+                        self.sess.run(self.summ_scalar_TRAINING,
+                                      feed_dict={self.img: _train_batch[0],
+                                             self.gt: _train_batch[1],
+                                             self.class_gt: _train_batch[1]}), _iter_count)
 
                     self.writer.add_summary(
                         self.sess.run(self.summ_scalar,
