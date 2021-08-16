@@ -292,7 +292,7 @@ if __name__ == '__main__':
 
     for x in range(len(GT)):
         dic_all[GT[x]] += 1
-        if predicts[x] == GT[x] or GT[x] == predicts2[x]:
+        if predicts[x] == GT[x]:
             correct += 1
             dic_right[GT[x]] += 1
         else:

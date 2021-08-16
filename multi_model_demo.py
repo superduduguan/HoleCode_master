@@ -126,7 +126,7 @@ def defect(normal_hole):
     NUM_CLA_MODEL = 5
     cla_models = []
     for i in range(NUM_CLA_MODEL):
-        cla_model_path = os.path.join(cur_dir, 'model/HoleDefect/HoleDefect' + str(i) + '.pb')
+        cla_model_path = os.path.join(cur_dir, 'model/HoleDefect/HoleDefect' + str(i) + '_450_128_False_20210814_070121.pb')
         cla_models.append(ClaPbModel(cla_model_path))
 
 
@@ -199,11 +199,8 @@ if __name__ == '__main__':
                         new_dist = max(0.3 * hole_img.shape[0] + 2, np.linalg.norm(center-np.array([i, j]))) - 0.3 * hole_img.shape[0] - 2
                         x = hole_img[i][j][k]
                         hole_img[i][j][k] = hole_img[i][j][k] / (1 + (new_dist / alpha) ** beta)
-                        # print('i=', i, ', j=', j, ', dist=', np.linalg.norm(center-np.array([i, j])), ', new_disk=', new_dist, ', weight', 1 / (1 + (new_dist / alpha) ** beta), ', para_old', x, ', para_new', hole_img[i][j][k])
-            
-            # hole_img = cv2.circle(hole_img, (hole_img.shape[0]//2, hole_img.shape[1]//2), int(0.3 * hole_img.shape[0]) + 2, (0, 0, 255))
+                        
             hole_img = cv2.resize(hole_img, (48, 48))
-
             name = path.split('\\')[-1]
             if height < 25:
                 print(path, ' is too small...Pay attention!')
@@ -235,71 +232,9 @@ if __name__ == '__main__':
         gt = path.split('\\')[-1].split('!')[-2]
         GT.append(gt)
 
-
     IMG = np.array(IMG)
-
     IMG = IMG.squeeze(axis=1)
-
     ALLSCORE = defect(IMG)
-
     scores = list(np.array(ALLSCORE).squeeze(axis=-1).T)
-    AS = [list(i) for i in scores]
-    print(AS)
-
-    with open(os.path.join(cur_dir, 'example/result/ALLSCORE.data'), 'wb') as f:
-        pickle.dump(AS, f)
-    with open(os.path.join(cur_dir, 'example/result/GT.data'), 'wb') as ff:
-        pickle.dump(GT, ff)
-    with open(os.path.join(cur_dir, 'example/result/PATH.data'), 'wb') as fff:
-        pickle.dump(PATH, fff)
-
-
-    posc = 0
-    negc = 0
-
-    with open(os.path.join(cur_dir, 'example/result/ALLSCORE.data'), 'rb') as f:
-        ALLSCORE = pickle.load(f)
-    with open(os.path.join(cur_dir, 'example/result/GT.data'), 'rb') as ff:
-        GT = pickle.load(ff)
-    with open(os.path.join(cur_dir, 'example/result/PATH.data'), 'rb') as fff:
-        PATH = pickle.load(fff)
-
-    for gt in GT:
-        if gt == 'pos':
-            posc += 1
-        if gt == 'neg':
-            negc += 1
-    print('total_neg:', negc)
-    print('total_pos:', posc)
-
-    for thr in [0.1, 0.12, 0.16, 0.19, 0.23]:
-        wrong_neg = 0
-        wrong_pos = 0
-        for i in range(len(GT)):
-            defect_count = 0
-
-            gt = GT[i]
-            scores = ALLSCORE[i]
-            path = PATH[i]
-
-            for j in range(len(scores)):
-                score = scores[j]
-                if score > thr:
-                    defect_count += 1
-
-            if gt == 'neg':
-                if defect_count >= 2:
-                    wrong_neg += 1
-                    if thr == 0.12:
-                        pass
-                        # copyfile(path, os.path.join(r'C:\Users\pc\Desktop\v0.0.2\example\error\wrong_neg', path.split('\\')[-1]))
-            if gt == 'pos':
-                if defect_count < 2:
-                    wrong_pos += 1
-                    if thr == 0.12:
-                        pass
-                        # copyfile(path, os.path.join(r'C:\Users\pc\Desktop\v0.0.2\example\error\wrong_pos', path.split('\\')[-1]))
-
-        print('\nDEFECT_Thr:', thr)
-        print('虚警:', wrong_neg, wrong_neg / negc)
-        print('漏检', wrong_pos, wrong_pos / posc) 
+    ALLSCORE = [list(i) for i in scores]
+    print(ALLSCORE)
